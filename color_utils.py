@@ -1,13 +1,37 @@
 import os
 os.environ['MPLBACKEND'] = 'Agg'  # Force Agg backend before importing matplotlib
 os.environ['DISPLAY'] = ''  # Disable display
-from PIL import Image, ImageDraw
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')  # Use non-GUI backend to prevent crashes
-matplotlib.rcParams['backend'] = 'Agg'  # Force Agg backend
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
+
+# Import with error handling
+try:
+    from PIL import Image, ImageDraw
+except ImportError as e:
+    print(f"Warning: PIL import failed: {e}")
+    Image = None
+    ImageDraw = None
+
+try:
+    import numpy as np
+except ImportError as e:
+    print(f"Warning: numpy import failed: {e}")
+    np = None
+
+try:
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-GUI backend to prevent crashes
+    matplotlib.rcParams['backend'] = 'Agg'  # Force Agg backend
+    import matplotlib.pyplot as plt
+except ImportError as e:
+    print(f"Warning: matplotlib import failed: {e}")
+    matplotlib = None
+    plt = None
+
+try:
+    from sklearn.cluster import KMeans
+except ImportError as e:
+    print(f"Warning: sklearn import failed: {e}")
+    KMeans = None
+
 import base64
 from io import BytesIO
 import colorsys
@@ -24,6 +48,14 @@ def extract_dominant_colors(image_path, num_colors=5):
     Returns:
         list: רשימת צבעים ב-RGB
     """
+    # Check if required libraries are available
+    if Image is None:
+        return []
+    if np is None:
+        return []
+    if KMeans is None:
+        return []
+        
     try:
         # בדיקה אם זה נתיב קובץ או base64
         if os.path.exists(image_path):
@@ -90,6 +122,11 @@ def plot_colors(colors, save_path=None):
         colors (list): רשימת צבעים
         save_path (str): נתיב לשמירת הגרף (אופציונלי)
     """
+    # Check if matplotlib is available
+    if plt is None or np is None:
+        print("Warning: matplotlib or numpy not available for plotting")
+        return
+        
     try:
         plt.figure(figsize=(10, 3))
         for i, color in enumerate(colors):

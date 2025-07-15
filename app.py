@@ -4,18 +4,36 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Set environment variables for matplotlib before importing
 os.environ['MPLBACKEND'] = 'Agg'  # Force Agg backend before importing matplotlib
 os.environ['DISPLAY'] = ''  # Disable display
-import matplotlib
-matplotlib.use('Agg')  # Use non-GUI backend to prevent crashes
-matplotlib.rcParams['backend'] = 'Agg'  # Force Agg backend
+
+# Import matplotlib with proper backend
+try:
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-GUI backend to prevent crashes
+    matplotlib.rcParams['backend'] = 'Agg'  # Force Agg backend
+except ImportError as e:
+    print(f"Warning: matplotlib import failed: {e}")
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from openai import OpenAI
 import base64
 from werkzeug.utils import secure_filename
-from color_utils import analyze_image_colors, analyze_combined_edges, analyze_image_edges
+
+# Import color_utils with error handling
+try:
+    from color_utils import analyze_image_colors, analyze_combined_edges, analyze_image_edges
+except ImportError as e:
+    print(f"Warning: color_utils import failed: {e}")
+    # Define fallback functions
+    def analyze_image_colors(*args, **kwargs):
+        return {'error': 'Color analysis not available'}
+    def analyze_combined_edges(*args, **kwargs):
+        return {'error': 'Edge analysis not available'}
+    def analyze_image_edges(*args, **kwargs):
+        return {'error': 'Edge analysis not available'}
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
@@ -29,8 +47,12 @@ session_data = {
     'edge_images': []
 }
 
-# OpenAI client
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# OpenAI client with error handling
+try:
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+except Exception as e:
+    print(f"Warning: OpenAI client initialization failed: {e}")
+    client = None
 
 # Function to encode image from base64 string
 def encode_image_from_base64(base64_string):
@@ -77,6 +99,9 @@ def analyze_image():
             'type': image_type,
             'timestamp': len(session_data['images'])
         })
+        
+        if client is None:
+            return jsonify({'error': 'OpenAI client not initialized'}), 500
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -138,6 +163,9 @@ def generate_image():
         
         # Generate new image based on the poetic text
         try:
+            if client is None:
+                return jsonify({'error': 'OpenAI client not initialized'}), 500
+                
             image_result = client.images.generate(
                 model="dall-e-3",
                 prompt=prompt,
