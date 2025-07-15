@@ -1,7 +1,7 @@
 import os
 os.environ['MPLBACKEND'] = 'Agg'  # Force Agg backend before importing matplotlib
 os.environ['DISPLAY'] = ''  # Disable display
-import cv2
+from PIL import Image, ImageDraw
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend to prevent crashes
@@ -27,25 +27,31 @@ def extract_dominant_colors(image_path, num_colors=5):
     try:
         # בדיקה אם זה נתיב קובץ או base64
         if os.path.exists(image_path):
-            img = cv2.imread(image_path)
+            img = Image.open(image_path)
         elif image_path.startswith('data:image'):
             # הסרת ה-prefix של data URL
             image_data = image_path.split(',')[1]
-            img_array = np.frombuffer(base64.b64decode(image_data), np.uint8)
-            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            img_bytes = base64.b64decode(image_data)
+            img = Image.open(BytesIO(img_bytes))
         else:
             # נסה לטפל כנתוני base64 רגילים
-            img_array = np.frombuffer(base64.b64decode(image_path), np.uint8)
-            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            img_bytes = base64.b64decode(image_path)
+            img = Image.open(BytesIO(img_bytes))
         
         if img is None:
             raise ValueError("לא הצלחתי לטעון את התמונה")
         
         # המרה ל-RGB
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = img.convert('RGB')
+        
+        # שינוי גודל לתמונה קטנה יותר לביצועים טובים יותר
+        img = img.resize((150, 150))
+        
+        # המרה למערך numpy
+        img_array = np.array(img)
         
         # שינוי צורה למערך של פיקסלים
-        img_reshaped = img.reshape((-1, 3))
+        img_reshaped = img_array.reshape((-1, 3))
         
         # חילוץ צבעים דומיננטיים עם K-means
         kmeans = KMeans(n_clusters=num_colors, n_init='auto', random_state=42)
@@ -517,37 +523,50 @@ def analyze_image_edges(image_url):
         if image_url.startswith('http'):
             response = requests.get(image_url, timeout=10)
             response.raise_for_status()
-            image_data = base64.b64encode(response.content).decode('utf-8')
+            img_bytes = response.content
+            img = Image.open(BytesIO(img_bytes))
         else:
             # אם זה כבר base64
-            image_data = image_url
-        
-        # המרה לתמונה
-        img_array = np.frombuffer(base64.b64decode(image_data), np.uint8)
-        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            if image_url.startswith('data:image'):
+                image_data = image_url.split(',')[1]
+                img_bytes = base64.b64decode(image_data)
+            else:
+                img_bytes = base64.b64decode(image_url)
+            img = Image.open(BytesIO(img_bytes))
         
         if img is None:
             return {'error': 'לא הצלחתי לטעון את התמונה'}
         
         # המרה לגווני אפור
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = img.convert('L')
         
-        # הפעלת Gaussian blur להפחתת רעש
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        # המרה למערך numpy
+        gray_array = np.array(gray)
         
-        # זיהוי קווי מתאר עם Canny
-        edges = cv2.Canny(blurred, 50, 150)
+        # זיהוי קווי מתאר פשוט
+        edges = np.zeros_like(gray_array)
         
-        # המרה חזרה ל-BGR להצגה
-        edges_bgr = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        # Simple edge detection
+        for x in range(1, gray_array.shape[0] - 1):
+            for y in range(1, gray_array.shape[1] - 1):
+                # Simple Sobel-like edge detection
+                gx = (gray_array[x+1, y] - gray_array[x-1, y]) / 2
+                gy = (gray_array[x, y+1] - gray_array[x, y-1]) / 2
+                magnitude = int(min(255, (gx**2 + gy**2)**0.5))
+                edges[x, y] = magnitude
         
-        # שמירה כ-base64
-        _, buffer = cv2.imencode('.png', edges_bgr)
-        edges_base64 = base64.b64encode(buffer).decode('utf-8')
+        # המרה חזרה לתמונה
+        edge_image = Image.fromarray(edges.astype(np.uint8))
+        
+        # המרה ל-base64
+        buffer = BytesIO()
+        edge_image.save(buffer, format='PNG')
+        edges_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         
         return {
-            'edges_image': {'combined_image': f"data:image/png;base64,{edges_base64}"},
-            'image_size': img.shape[:2]
+            'edge_image': f"data:image/png;base64,{edges_base64}",
+            'width': img.width,
+            'height': img.height
         }
         
     except Exception as e:
