@@ -6,8 +6,6 @@ from PIL import Image, ImageDraw
 import io
 import numpy as np
 from openai import OpenAI
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from sklearn.cluster import KMeans
 from collections import Counter
 
@@ -352,15 +350,7 @@ def analyze_image_edges(image_data):
     except Exception as e:
         return {'error': f'שגיאה בניתוח קווי המתאר: {str(e)}'}
 
-# Session state
-if 'images' not in st.session_state:
-    st.session_state.images = []
-if 'texts' not in st.session_state:
-    st.session_state.texts = []
-if 'gradients' not in st.session_state:
-    st.session_state.gradients = []
-if 'edge_images' not in st.session_state:
-    st.session_state.edge_images = []
+
 
 # Main container
 with st.container():
@@ -427,17 +417,35 @@ with st.container():
                         
                         result = response.choices[0].message.content
                         
-                        # Store in session state
-                        st.session_state.texts.append({
-                            'id': len(st.session_state.texts),
-                            'text': result,
-                            'timestamp': len(st.session_state.texts)
-                        })
-                        
                         # Display result
                         st.success("✨ הניתוח הפואטי הושלם!")
                         st.markdown("### 🎭 תיאור פואטי:")
                         st.markdown(f'<div class="text-container">{result}</div>', unsafe_allow_html=True)
+                        
+                        # Add generate image button directly after analysis
+                        if st.button("🎨 צור תמונה מהתיאור הזה"):
+                            with st.spinner("יוצר תמונה חדשה..."):
+                                try:
+                                    image_result = client.images.generate(
+                                        model="dall-e-3",
+                                        prompt=result,
+                                        size="1024x1024",
+                                        quality="standard",
+                                        n=1,
+                                    )
+                                    
+                                    if image_result.data and len(image_result.data) > 0:
+                                        generated_image_url = image_result.data[0].url
+                                        
+                                        # Display generated image
+                                        st.success("🎨 התמונה נוצרה בהצלחה!")
+                                        st.image(generated_image_url, caption="התמונה שנוצרה", use_column_width=False, width=400)
+                                        
+                                    else:
+                                        st.error("נכשל ביצירת התמונה")
+                                        
+                                except Exception as e:
+                                    st.error(f"שגיאה ביצירת התמונה: {str(e)}")
                         
                     except Exception as e:
                         st.error(f"שגיאה בניתוח: {str(e)}")
@@ -450,14 +458,6 @@ with st.container():
                         color_result = analyze_image_colors(img_str)
                         
                         if 'error' not in color_result:
-                            # Store in session state
-                            st.session_state.gradients.append({
-                                'id': len(st.session_state.gradients),
-                                'gradient_image': color_result['gradient_image'],
-                                'colors_count': len(color_result['colors_rgb']),
-                                'timestamp': len(st.session_state.gradients)
-                            })
-                            
                             # Display result
                             st.success("🎨 ניתוח הצבעים הושלם!")
                             st.markdown("### 🌈 גרדיאנט צבעים:")
@@ -480,13 +480,6 @@ with st.container():
                         edge_result = analyze_image_edges(img_str)
                         
                         if 'error' not in edge_result:
-                            # Store in session state
-                            st.session_state.edge_images.append({
-                                'id': len(st.session_state.edge_images),
-                                'edge_image': edge_result['edge_image'],
-                                'timestamp': len(st.session_state.edge_images)
-                            })
-                            
                             # Display result
                             st.success("📐 ניתוח קווי המתאר הושלם!")
                             st.markdown("### 📐 קווי מתאר:")
@@ -497,91 +490,9 @@ with st.container():
                     except Exception as e:
                         st.error(f"שגיאה בניתוח קווי מתאר: {str(e)}")
     
-    # Generate image section
-    if st.session_state.texts:
-        st.markdown('<div class="stDivider"></div>', unsafe_allow_html=True)
-        st.markdown("### 🎨 צור תמונה חדשה")
-        
-        # Select text to use as prompt
-        if len(st.session_state.texts) > 1:
-            selected_text_idx = st.selectbox(
-                "בחר תיאור ליצירת תמונה:",
-                range(len(st.session_state.texts)),
-                format_func=lambda x: f"תיאור {x+1}"
-            )
-            selected_text = st.session_state.texts[selected_text_idx]['text']
-        else:
-            selected_text = st.session_state.texts[0]['text']
-        
-        st.markdown("**התיאור שנבחר:**")
-        st.markdown(f'<div class="text-container">{selected_text}</div>', unsafe_allow_html=True)
-        
-        if st.button("🎨 צור תמונה"):
-            with st.spinner("יוצר תמונה חדשה..."):
-                try:
-                    image_result = client.images.generate(
-                        model="dall-e-3",
-                        prompt=selected_text,
-                        size="1024x1024",
-                        quality="standard",
-                        n=1,
-                    )
-                    
-                    if image_result.data and len(image_result.data) > 0:
-                        generated_image_url = image_result.data[0].url
-                        
-                        # Store in session state
-                        st.session_state.images.append({
-                            'id': len(st.session_state.images),
-                            'url': generated_image_url,
-                            'prompt': selected_text,
-                            'type': 'generated',
-                            'timestamp': len(st.session_state.images)
-                        })
-                        
-                        # Display generated image
-                        st.success("🎨 התמונה נוצרה בהצלחה!")
-                        st.image(generated_image_url, caption="התמונה שנוצרה", use_column_width=False, width=400)
-                        
-                    else:
-                        st.error("נכשל ביצירת התמונה")
-                        
-                except Exception as e:
-                    st.error(f"שגיאה ביצירת התמונה: {str(e)}")
+
     
-    # Display history
-    if st.session_state.texts or st.session_state.images or st.session_state.gradients or st.session_state.edge_images:
-        st.markdown('<div class="stDivider"></div>', unsafe_allow_html=True)
-        st.markdown("### 📚 היסטוריה")
-        
-        # Create tabs for different types of content
-        tab1, tab2, tab3, tab4 = st.tabs(["📝 תיאורים", "🖼️ תמונות", "🌈 גרדיאנטים", "📐 קווי מתאר"])
-        
-        with tab1:
-            if st.session_state.texts:
-                for i, text_data in enumerate(st.session_state.texts):
-                    with st.expander(f"תיאור {i+1}"):
-                        st.markdown(f'<div class="text-container">{text_data["text"]}</div>', unsafe_allow_html=True)
-        
-        with tab2:
-            if st.session_state.images:
-                for i, img_data in enumerate(st.session_state.images):
-                    with st.expander(f"תמונה {i+1}"):
-                        st.image(img_data['url'], use_column_width=False, width=300)
-                        st.markdown(f'<div class="text-container">{img_data["prompt"][:100]}...</div>', unsafe_allow_html=True)
-        
-        with tab3:
-            if st.session_state.gradients:
-                for i, grad_data in enumerate(st.session_state.gradients):
-                    with st.expander(f"גרדיאנט {i+1}"):
-                        st.image(grad_data['gradient_image'], use_column_width=False, width=300)
-                        st.write(f"מספר צבעים: {grad_data['colors_count']}")
-        
-        with tab4:
-            if st.session_state.edge_images:
-                for i, edge_data in enumerate(st.session_state.edge_images):
-                    with st.expander(f"קווי מתאר {i+1}"):
-                        st.image(edge_data['edge_image'], use_column_width=False, width=300)
+
     
     st.markdown('</div>', unsafe_allow_html=True)
 
