@@ -556,6 +556,12 @@ def analyze_image_edges(image_url):
         import base64
         from io import BytesIO
         
+        # Check if required libraries are available
+        if Image is None:
+            return {'error': 'PIL library not available'}
+        if np is None:
+            return {'error': 'numpy library not available'}
+        
         # הורדת התמונה אם זה URL
         if image_url.startswith('http'):
             response = requests.get(image_url, timeout=10)
