@@ -37,6 +37,13 @@ from io import BytesIO
 import colorsys
 from collections import Counter
 
+# Import OpenCV with error handling
+try:
+    import cv2
+except ImportError as e:
+    print(f"Warning: OpenCV import failed: {e}")
+    cv2 = None
+
 def extract_dominant_colors(image_path, num_colors=5):
     """
     מחלץ צבעים דומיננטיים מתמונה
@@ -486,6 +493,14 @@ def create_combined_edge_image(image1_data, image2_data, output_path=None, blend
     Returns:
         dict: {'combined_image': base64 string}
     """
+    # Check if OpenCV is available
+    if cv2 is None:
+        return {'error': 'OpenCV library not available for edge detection'}
+    if np is None:
+        return {'error': 'numpy library not available for edge detection'}
+    if Image is None:
+        return {'error': 'PIL library not available for edge detection'}
+        
     try:
         # טעינת התמונה הראשונה
         if os.path.exists(image1_data):
