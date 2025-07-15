@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הסוכן הפואטי</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: #1e3a8a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: #718096;
+            font-weight: 300;
+        }
+        
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(247, 250, 252, 0.5);
+        }
+        
+        .upload-area:hover {
+            border-color: #1e3a8a;
+            background: rgba(247, 250, 252, 0.8);
+            transform: translateY(-2px);
+        }
+        
+        .upload-area.dragover {
+            border-color: #1e3a8a;
+            background: rgba(30, 58, 138, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #a0aec0;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .preview-container {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .analyze-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+        }
+        
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1e3a8a;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result-title {
+            font-size: 1.3rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .result-text {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: right;
+            line-height: 1.6;
+            color: #4a5568;
+            font-size: 1rem;
+            white-space: pre-wrap;
+        }
+        
+        .generated-image-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .generated-image-title {
+            font-size: 1.2rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .generated-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e2e8f0;
+        }
+        
+        .generate-image-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+            display: none;
+        }
+        
+        .generate-image-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+        }
+        
+        .generate-image-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .generate-image-loading {
+            display: none;
+            margin: 15px 0;
+        }
+        
+        .generate-image-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1e3a8a;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        
+        .color-analysis-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+            display: none;
+        }
+        
+        .color-analysis-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+        }
+        
+        .color-analysis-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .color-analysis-loading {
+            display: none;
+            margin: 15px 0;
+        }
+        
+        .color-analysis-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1e3a8a;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        
+        .edge-analysis-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+        }
+        
+        .edge-analysis-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+        }
+        
+        .edge-analysis-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .edge-analysis-loading {
+            margin: 15px 0;
+        }
+        
+        .edge-analysis-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1e3a8a;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        
+        .edge-analysis-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f7fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .edges-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e2e8f0;
+            display: block;
+            margin: 10px auto;
+        }
+        
+        .color-analysis-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .color-analysis-title {
+            font-size: 1.2rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .gradient-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e2e8f0;
+        }
+        
+        .color-info {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: right;
+        }
+        
+        .thoughts-container {
+            margin-top: 30px;
+            text-align: right;
+        }
+        
+        .thoughts-title {
+            font-size: 1.2rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .thoughts-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            background: #f7fafc;
+            transition: border-color 0.3s ease;
+        }
+        
+        .thoughts-textarea:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            background: white;
+        }
+        
+        .thoughts-textarea::placeholder {
+            color: #a0aec0;
+        }
+        
+        .additional-image-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .additional-image-title {
+            font-size: 1.1rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .additional-upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(247, 250, 252, 0.5);
+        }
+        
+        .additional-upload-area:hover {
+            border-color: #1e3a8a;
+            background: rgba(247, 250, 252, 0.8);
+            transform: translateY(-1px);
+        }
+        
+        .additional-upload-area.dragover {
+            border-color: #1e3a8a;
+            background: rgba(30, 58, 138, 0.1);
+            transform: scale(1.01);
+        }
+        
+        .additional-preview-container {
+            margin: 15px 0;
+        }
+        
+        .analyze-additional-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+            box-shadow: 0 3px 10px rgba(30, 58, 138, 0.3);
+        }
+        
+        .analyze-additional-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.4);
+        }
+        
+        .analyze-additional-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .additional-loading {
+            margin: 15px 0;
+        }
+        
+        .additional-result-container {
+            margin-top: 20px;
+        }
+        
+        .additional-result-title {
+            font-size: 1rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .additional-result-text {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: right;
+            line-height: 1.5;
+            color: #4a5568;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+        
+        .generate-additional-image-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+            box-shadow: 0 3px 10px rgba(30, 58, 138, 0.3);
+        }
+        
+        .generate-additional-image-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.4);
+        }
+        
+        .generate-additional-image-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .generate-additional-image-loading {
+            margin: 10px 0;
+        }
+        
+        .additional-generated-image-container {
+            margin-top: 15px;
+        }
+        
+        .additional-generated-image-title {
+            font-size: 0.9rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .color-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .color-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+
+        
+
+        
+        .error {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            border: 1px solid #9ae6b4;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .main-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+            min-width: 220px;
+            text-align: center;
+            display: inline-block;
+        }
+        .main-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">הסוכן הפואטי </h1>
+            <p class="subtitle">העלה תמונה וקבל תיאור מוזיקלי-פואטי הזוי ומצחיק</p>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-text">גרור תמונה לכאן או לחץ לבחירה</div>
+            <div class="upload-hint">תמונות JPG, PNG, GIF עד 10MB</div>
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+        </div>
+        
+        <div class="preview-container" id="previewContainer">
+            <img id="imagePreview" class="image-preview">
+        </div>
+        
+        <div class="button-group">
+            <button class="main-btn" id="analyzeBtn" disabled>ניתוח פואטי</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>הסוכן הפואטי חושב על התמונה שלך...</div>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <h3 class="result-title">התוצאה הפואטית</h3>
+            <div class="result-text" id="resultText"></div>
+            
+            <button class="main-btn" id="generateImageBtn" style="display: none;">צור תמונה חדשה מהתיאור הפואטי</button>
+            
+            <div class="generate-image-loading" id="generateImageLoading">
+                <div class="generate-image-spinner"></div>
+                <div>יוצר תמונה חדשה...</div>
+            </div>
+            
+            <div class="generated-image-container" id="generatedImageContainer">
+                <h4 class="generated-image-title">התמונה החדשה שנוצרה</h4>
+                <img id="generatedImage" class="generated-image">
+                
+                <button class="main-btn" id="colorAnalysisBtn" style="display: none;"> המשך לנתח את הדימויים</button>
+                
+                <div class="color-analysis-loading" id="colorAnalysisLoading">
+                    <div class="color-analysis-spinner"></div>
+                    <div>הסוכן הפואטי מחשב עוד שילוב של הדימויים...</div>
+                </div>
+                
+                <div class="color-analysis-container" id="colorAnalysisContainer">
+                    <img id="gradientImage" class="gradient-image">
+                </div>
+                
+                <button class="main-btn" id="edgeAnalysisBtn" style="display: none;">המשך לנתח את הדימויים</button>
+                
+                <div class="edge-analysis-loading" id="edgeAnalysisLoading" style="display: none;">
+                    <div class="edge-analysis-spinner"></div>
+                    <div>הסוכן הפואטי מחשב עוד שילוב של הדימויים...</div>
+                </div>
+                
+                <div class="edge-analysis-container" id="edgeAnalysisContainer" style="display: none;">
+                    <img id="edgesImage" class="edges-image">
+                </div>
+                
+                <div class="thoughts-container" id="thoughtsContainer" style="display: none;">
+                    <h4 class="thoughts-title">מה המחשבות שלך עד עכשיו?</h4>
+                    <textarea id="thoughtsText" class="thoughts-textarea" placeholder="שתף את המחשבות שלך על התהליך, הצבעים, או כל דבר אחר שעולה לך..."></textarea>
+                    
+                    <div class="additional-image-section">
+                        <h5 class="additional-image-title">העלה דימוי חדש שקופץ לך לראש בעקבות המחשבות שלך עד כה ושמסקרן אותך לשתף אותי בו</h5>
+                        <div class="additional-upload-area" id="additionalUploadArea">
+                            <div class="upload-text">גרור תמונה נוספת לכאן או לחץ לבחירה</div>
+                            <div class="upload-hint">תמונות JPG, PNG, GIF עד 10MB</div>
+                            <input type="file" id="additionalFileInput" class="file-input" accept="image/*">
+                        </div>
+                        
+                        <div class="additional-preview-container" id="additionalPreviewContainer" style="display: none;">
+                            <img id="additionalImagePreview" class="image-preview">
+                        </div>
+                        
+                        <button class="main-btn" id="analyzeAdditionalBtn" style="display: none;">ניתוח פואטי</button>
+                        
+                        <div class="additional-loading" id="additionalLoading" style="display: none;">
+                            <div class="spinner"></div>
+                            <div>הסוכן הפואטי חושב על הדימוי הנוסף...</div>
+                        </div>
+                        
+                        <div class="additional-result-container" id="additionalResultContainer" style="display: none;">
+                            <h5 class="additional-result-title">התוצאה הפואטית </h5>
+                            <div class="additional-result-text" id="additionalResultText"></div>
+                            
+                            <button class="main-btn" id="generateAdditionalImageBtn" style="display: none;">צור תמונה  מהתיאור הפואטי</button>
+                            
+                            <div class="generate-additional-image-loading" id="generateAdditionalImageLoading" style="display: none;">
+                                <div class="generate-image-spinner"></div>
+                                <div>יוצר תמונה חדשה...</div>
+                            </div>
+                            
+                            <div class="additional-generated-image-container" id="additionalGeneratedImageContainer" style="display: none;">
+                                <h5 class="additional-generated-image-title">התמונה החדשה שנוצרה</h5>
+                                <img id="additionalGeneratedImage" class="generated-image">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultText = document.getElementById('resultText');
+        const generateImageBtn = document.getElementById('generateImageBtn');
+        const generateImageLoading = document.getElementById('generateImageLoading');
+        const generatedImageContainer = document.getElementById('generatedImageContainer');
+        const generatedImage = document.getElementById('generatedImage');
+        const colorAnalysisBtn = document.getElementById('colorAnalysisBtn');
+        const colorAnalysisLoading = document.getElementById('colorAnalysisLoading');
+        const colorAnalysisContainer = document.getElementById('colorAnalysisContainer');
+        const gradientImage = document.getElementById('gradientImage');
+        const colorInfo = document.getElementById('colorInfo');
+        const thoughtsContainer = document.getElementById('thoughtsContainer');
+        const thoughtsText = document.getElementById('thoughtsText');
+        const edgeAnalysisBtn = document.getElementById('edgeAnalysisBtn');
+        const edgeAnalysisLoading = document.getElementById('edgeAnalysisLoading');
+        const edgeAnalysisContainer = document.getElementById('edgeAnalysisContainer');
+        const edgesImage = document.getElementById('edgesImage');
+        const additionalUploadArea = document.getElementById('additionalUploadArea');
+        const additionalFileInput = document.getElementById('additionalFileInput');
+        const additionalPreviewContainer = document.getElementById('additionalPreviewContainer');
+        const additionalImagePreview = document.getElementById('additionalImagePreview');
+        const analyzeAdditionalBtn = document.getElementById('analyzeAdditionalBtn');
+        const additionalLoading = document.getElementById('additionalLoading');
+        const additionalResultContainer = document.getElementById('additionalResultContainer');
+        const additionalResultText = document.getElementById('additionalResultText');
+        const generateAdditionalImageBtn = document.getElementById('generateAdditionalImageBtn');
+        const generateAdditionalImageLoading = document.getElementById('generateAdditionalImageLoading');
+        const additionalGeneratedImageContainer = document.getElementById('additionalGeneratedImageContainer');
+        const additionalGeneratedImage = document.getElementById('additionalGeneratedImage');
+        
+        let selectedImage = null;
+        let generatedImageUrl = null;
+        let additionalImage = null;
+        let additionalGeneratedImageUrl = null;
+        
+        // Drag and drop events
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        // Additional image drag and drop events
+        additionalUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            additionalUploadArea.classList.add('dragover');
+        });
+        
+        additionalUploadArea.addEventListener('dragleave', () => {
+            additionalUploadArea.classList.remove('dragover');
+        });
+        
+        additionalUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            additionalUploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleAdditionalFile(files[0]);
+            }
+        });
+        
+        additionalUploadArea.addEventListener('click', () => {
+            additionalFileInput.click();
+        });
+        
+        additionalFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleAdditionalFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('אנא בחר קובץ תמונה בלבד');
+                return;
+            }
+            
+            // הגדלת הגבלת גודל הקובץ ל-25MB
+            if (file.size > 25 * 1024 * 1024) {
+                showError('הקובץ גדול מדי. אנא בחר קובץ קטן מ-25MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // דחיסת התמונה אם היא גדולה מדי
+                compressImage(e.target.result, (compressedImage) => {
+                    selectedImage = compressedImage;
+                    imagePreview.src = selectedImage;
+                    previewContainer.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                    resultContainer.style.display = 'none';
+                    generateImageBtn.style.display = 'none';
+                    generatedImageContainer.style.display = 'none';
+                    colorAnalysisContainer.style.display = 'none';
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function handleAdditionalFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('אנא בחר קובץ תמונה בלבד');
+                return;
+            }
+            
+            // הגדלת הגבלת גודל הקובץ ל-25MB
+            if (file.size > 25 * 1024 * 1024) {
+                showError('הקובץ גדול מדי. אנא בחר קובץ קטן מ-25MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // דחיסת התמונה אם היא גדולה מדי
+                compressImage(e.target.result, (compressedImage) => {
+                    additionalImage = compressedImage;
+                    additionalImagePreview.src = additionalImage;
+                    additionalPreviewContainer.style.display = 'block';
+                    // הצגת כפתור ניתוח הדימוי הנוסף
+                    analyzeAdditionalBtn.style.display = 'inline-block';
+                    additionalResultContainer.style.display = 'none';
+                    additionalGeneratedImageContainer.style.display = 'none';
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedImage) return;
+            
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: selectedImage.split(',')[1]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultText.textContent = data.result;
+                    resultContainer.style.display = 'block';
+                    generatedImageContainer.style.display = 'none';
+                    generateImageBtn.style.display = 'inline-block';
+                } else {
+                    showError(data.error || 'שגיאה בניתוח התמונה');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Handle generate image button click
+        generateImageBtn.addEventListener('click', async () => {
+            const prompt = resultText.textContent;
+            if (!prompt) return;
+            
+            generateImageBtn.disabled = true;
+            generateImageLoading.style.display = 'block';
+            generatedImageContainer.style.display = 'none';
+            
+            try {
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.generated_image_url) {
+                        generatedImageUrl = data.generated_image_url;
+                        generatedImage.src = data.generated_image_url;
+                        generatedImageContainer.style.display = 'block';
+                        colorAnalysisBtn.style.display = 'inline-block';
+                    } else {
+                        showError('לא התקבל URL לתמונה');
+                    }
+                } else {
+                    showError(data.error || 'שגיאה ביצירת התמונה');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                generateImageBtn.disabled = false;
+                generateImageLoading.style.display = 'none';
+            }
+        });
+        
+        // Handle color analysis button click
+        colorAnalysisBtn.addEventListener('click', async () => {
+            await performColorAnalysis();
+        });
+        
+        // Handle edge analysis button click
+        edgeAnalysisBtn.addEventListener('click', async () => {
+            await performEdgeAnalysis();
+        });
+        
+        // Handle additional image analysis button click
+        analyzeAdditionalBtn.addEventListener('click', async () => {
+            await performAdditionalAnalysis();
+        });
+        
+        // Handle additional image generation button click
+        generateAdditionalImageBtn.addEventListener('click', async () => {
+            await performAdditionalImageGeneration();
+        });
+        
+
+        
+        async function performColorAnalysis() {
+            if (!selectedImage || !generatedImageUrl) {
+                showError('חסרים דימויים לניתוח');
+                return;
+            }
+            
+            colorAnalysisBtn.disabled = true;
+            colorAnalysisLoading.style.display = 'block';
+            colorAnalysisContainer.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze-colors-combined', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original_image: selectedImage.split(',')[1],
+                        generated_image_url: generatedImageUrl,
+                        num_colors: 8
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.gradient_image) {
+                        gradientImage.src = data.gradient_image;
+                        colorAnalysisContainer.style.display = 'block';
+                        edgeAnalysisBtn.style.display = 'inline-block';
+                    } else {
+                        showError('לא התקבל גרדיאנט');
+                    }
+                } else {
+                    showError(data.error || 'שגיאה בניתוח הצבעים');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                colorAnalysisBtn.disabled = false;
+                colorAnalysisLoading.style.display = 'none';
+            }
+        }
+        
+        async function performAdditionalAnalysis() {
+            if (!additionalImage) return;
+            
+            analyzeAdditionalBtn.disabled = true;
+            additionalLoading.style.display = 'block';
+            additionalResultContainer.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: additionalImage.split(',')[1],
+                        is_additional: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    additionalResultText.textContent = data.result;
+                    additionalResultContainer.style.display = 'block';
+                    additionalGeneratedImageContainer.style.display = 'none';
+                    generateAdditionalImageBtn.style.display = 'inline-block';
+                } else {
+                    showError(data.error || 'שגיאה בניתוח הדימוי הנוסף');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                analyzeAdditionalBtn.disabled = false;
+                additionalLoading.style.display = 'none';
+            }
+        }
+        
+        async function performAdditionalImageGeneration() {
+            const prompt = additionalResultText.textContent;
+            if (!prompt) return;
+            
+            generateAdditionalImageBtn.disabled = true;
+            generateAdditionalImageLoading.style.display = 'block';
+            additionalGeneratedImageContainer.style.display = 'none';
+            
+            try {
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        is_additional: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.generated_image_url) {
+                        // שמירת הדימויים החדשים
+                        additionalGeneratedImageUrl = data.generated_image_url;
+                        
+                        // עדכון התצוגה - הדימויים הקודמים נשארים
+                        additionalGeneratedImage.src = data.generated_image_url;
+                        additionalGeneratedImageContainer.style.display = 'block';
+                        
+                        // וידוא שהתמונה השנייה נשארת גלויה
+                        additionalPreviewContainer.style.display = 'block';
+                        
+                        // מחיקת כפתורים ותוצאות קודמות אם קיימים
+                        const existingButtons = additionalGeneratedImageContainer.querySelectorAll('.color-analysis-btn, .edge-analysis-btn');
+                        existingButtons.forEach(btn => btn.remove());
+                        
+                        const existingResults = additionalGeneratedImageContainer.querySelectorAll('.color-analysis-container, .edge-analysis-container');
+                        existingResults.forEach(result => result.remove());
+                        
+                        // הצגת כפתור לניתוח קווי מתאר משולב מכל התמונות
+                        const allImagesEdgeBtn = document.createElement('button');
+                        allImagesEdgeBtn.className = 'main-btn edge-analysis-btn';
+                        allImagesEdgeBtn.textContent = 'המשך לנתח את הדימויים';
+                        allImagesEdgeBtn.onclick = async () => {
+                            await performNewImagesEdgeAnalysis(allImagesEdgeBtn);
+                        };
+                        
+                        const buttonGroup = document.createElement('div');
+                        buttonGroup.className = 'button-group';
+                        buttonGroup.appendChild(allImagesEdgeBtn);
+                        additionalGeneratedImageContainer.appendChild(buttonGroup);
+                        
+                        // הסתרת הכפתור לניתוח נוסף (התמונה נשארת)
+                        analyzeAdditionalBtn.style.display = 'none';
+                        
+                    } else {
+                        showError('לא התקבל URL לתמונה');
+                    }
+                } else {
+                    showError(data.error || 'שגיאה ביצירת התמונה');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                generateAdditionalImageBtn.disabled = false;
+                generateAdditionalImageLoading.style.display = 'none';
+            }
+        }
+        
+        async function performAdditionalColorAnalysis() {
+            if (!additionalGeneratedImageUrl) {
+                showError('חסרה תמונה לניתוח');
+                return;
+            }
+            
+            
+            
+            try {
+                // ניתוח צבעים של התמונה הנוספת שנוצרה
+                const response = await fetch('/analyze-colors', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_url: additionalGeneratedImageUrl,
+                        num_colors: 8
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.gradient_image) {
+                        // מחיקת כפתורים קודמים אם קיימים
+                        const existingButtons = additionalGeneratedImageContainer.querySelectorAll('.edge-analysis-btn');
+                        existingButtons.forEach(btn => btn.remove());
+                        
+                        // יצירת אזור לגרדיאנט
+                        const gradientContainer = document.createElement('div');
+                        gradientContainer.className = 'color-analysis-container';
+                        gradientContainer.style.marginTop = '15px';
+                        gradientContainer.style.padding = '15px';
+                        gradientContainer.style.borderRadius = '10px';
+                        gradientContainer.style.backgroundColor = '#f7fafc';
+                        
+                        const gradientTitle = document.createElement('h6');
+                        gradientTitle.textContent = 'גרדיאנט צבעים מהתמונה הנוספת שנוצרה';
+                        gradientTitle.style.marginBottom = '10px';
+                        gradientTitle.style.fontSize = '0.9rem';
+                        gradientTitle.style.color = '#2d3748';
+                        gradientTitle.style.fontWeight = 'bold';
+                        
+                        const gradientImage = document.createElement('img');
+                        gradientImage.src = data.gradient_image;
+                        gradientImage.alt = 'Gradient Image';
+                        gradientImage.className = 'gradient-image';
+                        gradientImage.style.maxHeight = '150px';
+                        gradientImage.style.width = 'auto';
+                        gradientImage.style.display = 'block';
+                        gradientImage.style.margin = '10px auto';
+                        gradientImage.style.borderRadius = '8px';
+                        gradientImage.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                        
+                        gradientContainer.appendChild(gradientTitle);
+                        gradientContainer.appendChild(gradientImage);
+                        additionalGeneratedImageContainer.appendChild(gradientContainer);
+                        
+                        // וידוא שהתמונה השנייה נשארת גלויה
+                        additionalPreviewContainer.style.display = 'block';
+                        
+                        // הצגת כפתור לניתוח קווי מתאר משולב מכל התמונות
+                        const allImagesEdgeBtn = document.createElement('button');
+                        allImagesEdgeBtn.className = 'main-btn edge-analysis-btn';
+                        allImagesEdgeBtn.textContent = 'המשך לנתח את הדימויים';
+                        allImagesEdgeBtn.onclick = async () => {
+                            await performNewImagesEdgeAnalysis(allImagesEdgeBtn);
+                        };
+                        
+                        const edgeButtonGroup = document.createElement('div');
+                        edgeButtonGroup.className = 'button-group';
+                        edgeButtonGroup.appendChild(allImagesEdgeBtn);
+                        additionalGeneratedImageContainer.appendChild(edgeButtonGroup);
+                        
+                    } else {
+                        showError('לא התקבל גרדיאנט');
+                    }
+                } else {
+                    showError(data.error || 'שגיאה בניתוח הצבעים');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            }
+        }
+        
+        async function performAdditionalEdgeAnalysis() {
+            if (!additionalGeneratedImageUrl) {
+                showError('חסרה תמונה לניתוח');
+                return;
+            }
+            
+
+            
+            try {
+                const response = await fetch('/analyze-edges', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_url: additionalGeneratedImageUrl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.edges_image && data.edges_image.combined_image) {
+                        // מחיקת כפתורים קודמים אם קיימים
+                        const existingButtons = additionalGeneratedImageContainer.querySelectorAll('.color-analysis-btn, .edge-analysis-btn');
+                        existingButtons.forEach(btn => btn.remove());
+                        
+                        // יצירת אזור לקווי המתאר
+                        const edgesContainer = document.createElement('div');
+                        edgesContainer.className = 'edge-analysis-container';
+                        edgesContainer.style.marginTop = '15px';
+                        edgesContainer.style.padding = '15px';
+                        edgesContainer.style.borderRadius = '10px';
+                        edgesContainer.style.backgroundColor = '#f7fafc';
+                        
+                        const edgesTitle = document.createElement('h6');
+                        edgesTitle.textContent = 'קווי מתאר מהתמונה הנוספת שנוצרה';
+                        edgesTitle.style.marginBottom = '10px';
+                        edgesTitle.style.fontSize = '0.9rem';
+                        edgesTitle.style.color = '#2d3748';
+                        edgesTitle.style.fontWeight = 'bold';
+                        
+                        const edgesImage = document.createElement('img');
+                        edgesImage.src = data.edges_image.combined_image;
+                        edgesImage.alt = 'Edges Image';
+                        edgesImage.className = 'edges-image';
+                        edgesImage.style.maxHeight = '150px';
+                        edgesImage.style.width = 'auto';
+                        edgesImage.style.display = 'block';
+                        edgesImage.style.margin = '10px auto';
+                        edgesImage.style.borderRadius = '8px';
+                        edgesImage.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                        
+                        edgesContainer.appendChild(edgesTitle);
+                        edgesContainer.appendChild(edgesImage);
+                        additionalGeneratedImageContainer.appendChild(edgesContainer);
+                        
+                        // וידוא שהתמונה השנייה נשארת גלויה
+                        additionalPreviewContainer.style.display = 'block';
+                        
+                        // הצגת כפתור לניתוח קווי מתאר משולב עם כל התמונות
+                        const allImagesEdgeBtn = document.createElement('button');
+                        allImagesEdgeBtn.className = 'main-btn edge-analysis-btn';
+                        allImagesEdgeBtn.textContent = 'המשך לנתח את הדימויים';
+                        allImagesEdgeBtn.onclick = async () => {
+                            await performNewImagesEdgeAnalysis(allImagesEdgeBtn);
+                        };
+                        
+                        const allImagesEdgeGroup = document.createElement('div');
+                        allImagesEdgeGroup.className = 'button-group';
+                        allImagesEdgeGroup.appendChild(allImagesEdgeBtn);
+                        additionalGeneratedImageContainer.appendChild(allImagesEdgeGroup);
+                        
+                    } else {
+                        showError('לא התקבלה תמונת קווי מתאר');
+                    }
+                } else {
+                    showError(data.error || 'שגיאה בניתוח קווי המתאר');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            }
+        }
+        
+        async function performAllImagesColorAnalysis() {
+            if (!selectedImage || !generatedImageUrl || !additionalImage || !additionalGeneratedImageUrl) {
+                showError('חסרים דימויים לניתוח');
+                return;
+            }
+            
+            try {
+                // ניתוח צבעים משולב עם התמונה המקורית והתמונה שנוצרה
+                const response1 = await fetch('/analyze-colors-combined', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original_image: selectedImage.split(',')[1],
+                        generated_image_url: generatedImageUrl,
+                        num_colors: 6
+                    })
+                });
+                
+                const data1 = await response1.json();
+                
+                if (!response1.ok) {
+                    showError(data1.error || 'שגיאה בניתוח הצבעים הראשונים');
+                    return;
+                }
+                
+                // ניתוח צבעים משולב עם הדימוי החדש והתמונה שנוצרה ממנו
+                const response2 = await fetch('/analyze-colors-combined', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original_image: additionalImage.split(',')[1],
+                        generated_image_url: additionalGeneratedImageUrl,
+                        num_colors: 6
+                    })
+                });
+                
+                const data2 = await response2.json();
+                
+                if (!response2.ok) {
+                    showError(data2.error || 'שגיאה בניתוח הצבעים השניים');
+                    return;
+                }
+                
+                // יצירת גרדיאנט משולב מכל הצבעים
+                const allColors = data1.colors_rgb.concat(data2.colors_rgb);
+                
+                // יצירת גרדיאנט משולב
+                const combinedGradientResponse = await fetch('/create-combined-gradient', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        colors: allColors
+                    })
+                });
+                
+                const combinedGradientData = await combinedGradientResponse.json();
+                
+                if (combinedGradientResponse.ok && combinedGradientData.gradient_image) {
+                    // יצירת אזור חדש לגרדיאנט המשולב
+                    const newGradientContainer = document.createElement('div');
+                    newGradientContainer.className = 'color-analysis-container';
+                    newGradientContainer.style.marginTop = '15px';
+                    
+                    const newGradientTitle = document.createElement('h6');
+                    newGradientTitle.textContent = 'גרדיאנט משולב מכל התמונות';
+                    newGradientTitle.style.marginBottom = '10px';
+                    newGradientTitle.style.fontSize = '0.9rem';
+                    newGradientTitle.style.color = '#2d3748';
+                    
+                    const newGradientImage = document.createElement('img');
+                    newGradientImage.src = combinedGradientData.gradient_image;
+                    newGradientImage.className = 'gradient-image';
+                    newGradientImage.style.maxHeight = '150px';
+                    
+                    newGradientContainer.appendChild(newGradientTitle);
+                    newGradientContainer.appendChild(newGradientImage);
+                    additionalGeneratedImageContainer.appendChild(newGradientContainer);
+                    
+                    // וידוא שהתמונה השנייה נשארת גלויה
+                    additionalPreviewContainer.style.display = 'block';
+                    
+                    // הצגת כפתור לניתוח קווי מתאר משולב
+                    const newEdgeAnalysisBtn = document.createElement('button');
+                    newEdgeAnalysisBtn.className = 'main-btn edge-analysis-btn';
+                    newEdgeAnalysisBtn.textContent = 'המשך לנתח את הדימויים';
+                    newEdgeAnalysisBtn.onclick = async () => {
+                        await performNewImagesEdgeAnalysis(newEdgeAnalysisBtn);
+                    };
+                    
+                    const newEdgeButtonGroup = document.createElement('div');
+                    newEdgeButtonGroup.className = 'button-group';
+                    newEdgeButtonGroup.appendChild(newEdgeAnalysisBtn);
+                    additionalGeneratedImageContainer.appendChild(newEdgeButtonGroup);
+                    
+                } else {
+                    showError('שגיאה ביצירת הגרדיאנט המשולב');
+                }
+                
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            }
+        }
+        
+        async function performNewImagesEdgeAnalysis(button = null) {
+            if (!additionalImage || !additionalGeneratedImageUrl) {
+                showError('חסרים דימויים לניתוח');
+                return;
+            }
+            
+            // הוספת מצב טעינה לכפתור
+            if (button) {
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'טוען...';
+            }
+            
+            try {
+                // ניתוח קווי מתאר משולב עם התמונה החדשה והדימוי החדש שנוצר
+                const response = await fetch('/analyze-edges-combined', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original_image: additionalImage.split(',')[1],
+                        generated_image_url: additionalGeneratedImageUrl,
+                        blend_ratio: 0.5
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(data.error || 'שגיאה בניתוח קווי המתאר');
+                    return;
+                }
+                
+                // יצירת אזור חדש לקווי המתאר המשולבים
+                const newEdgesContainer = document.createElement('div');
+                newEdgesContainer.className = 'edge-analysis-container';
+                newEdgesContainer.style.marginTop = '15px';
+                
+                const newEdgesTitle = document.createElement('h6');
+                newEdgesTitle.textContent = 'קווי מתאר משולבים מהתמונה החדשה והדימוי החדש';
+                newEdgesTitle.style.marginBottom = '10px';
+                newEdgesTitle.style.fontSize = '0.9rem';
+                newEdgesTitle.style.color = '#2d3748';
+                
+                // הצגת תמונת קווי המתאר
+                const edgesImage = document.createElement('img');
+                edgesImage.src = data.edges_image.combined_image;
+                edgesImage.className = 'edges-image';
+                edgesImage.style.maxHeight = '400px';
+                edgesImage.style.width = 'auto';
+                edgesImage.style.display = 'block';
+                edgesImage.style.margin = '10px auto';
+                edgesImage.style.borderRadius = '8px';
+                edgesImage.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                
+                newEdgesContainer.appendChild(newEdgesTitle);
+                newEdgesContainer.appendChild(edgesImage);
+                additionalGeneratedImageContainer.appendChild(newEdgesContainer);
+                
+                // וידוא שהתמונה השנייה נשארת גלויה
+                additionalPreviewContainer.style.display = 'block';
+                
+                // הודעת סיום יפה
+                const farewellContainer = document.createElement('div');
+                farewellContainer.className = 'farewell-container';
+                farewellContainer.style.marginTop = '30px';
+                farewellContainer.style.padding = '25px';
+                farewellContainer.style.backgroundColor = 'rgba(30, 58, 138, 0.1)';
+                farewellContainer.style.borderRadius = '15px';
+                farewellContainer.style.border = '2px solid rgba(30, 58, 138, 0.3)';
+                farewellContainer.style.textAlign = 'center';
+                
+                const farewellMessage = document.createElement('div');
+                farewellMessage.innerHTML = `
+                    <h4 style="color: #1e3a8a; margin-bottom: 15px; font-size: 1.3rem; font-weight: 600;">עד כאן הסוכן הפואטי</h4>
+                    <p style="color: #374151; line-height: 1.6; font-size: 1.1rem; margin-bottom: 10px;">היה לי ממש נחמד לעבוד איתך.</p>
+                    <p style="color: #374151; line-height: 1.6; font-size: 1.1rem; margin-bottom: 15px;">עם הדימויים וההשראה שיצרנו יחד, עכשיו הזמן שלך לעבוד בפנדה.</p>
+                    <p style="color: #1e3a8a; font-weight: 600; font-size: 1.2rem;">בהצלחה! </p>
+                `;
+                
+                farewellContainer.appendChild(farewellMessage);
+                additionalGeneratedImageContainer.appendChild(farewellContainer);
+                
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                // החזרת הכפתור למצב רגיל
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'המשך לנתח את הדימויים';
+                }
+            }
+        }
+        
+        async function performEdgeAnalysis() {
+            if (!selectedImage || !generatedImageUrl) {
+                showError('חסרים דימויים לניתוח');
+                return;
+            }
+            
+            edgeAnalysisBtn.disabled = true;
+            edgeAnalysisLoading.style.display = 'block';
+            edgeAnalysisContainer.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze-edges-combined', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original_image: selectedImage.split(',')[1],
+                        generated_image_url: generatedImageUrl,
+                        blend_ratio: 0.5
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.edges_image && data.edges_image.combined_image) {
+                        console.log('Edges image received, length:', data.edges_image.combined_image.length);
+                        edgesImage.src = data.edges_image.combined_image;
+                        edgeAnalysisContainer.style.display = 'block';
+                        thoughtsContainer.style.display = 'block';
+                        
+                        // בדיקה שהתמונה נטענה
+                        edgesImage.onload = () => {
+                            console.log('Edges image loaded successfully');
+                        };
+                        edgesImage.onerror = () => {
+                            console.error('Failed to load edges image');
+                            showError('שגיאה בטעינת תמונת קווי המתאר');
+                        };
+                    } else {
+                        showError('לא התקבלה תמונת קווי מתאר');
+                    }
+                } else {
+                    showError(data.error || 'שגיאה בניתוח קווי המתאר');
+                }
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת');
+            } finally {
+                edgeAnalysisBtn.disabled = false;
+                edgeAnalysisLoading.style.display = 'none';
+            }
+        }
+        
+        // פונקציה לדחיסת תמונות
+        function compressImage(dataUrl, callback) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // קביעת גודל מקסימלי
+                const maxWidth = 1024;
+                const maxHeight = 1024;
+                
+                let { width, height } = img;
+                
+                // שינוי גודל אם התמונה גדולה מדי
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width *= ratio;
+                    height *= ratio;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // ציור התמונה על הקנבס
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // המרה ל-JPEG עם איכות 0.8
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                callback(compressedDataUrl);
+            };
+            
+            img.onerror = function() {
+                // אם הדחיסה נכשלת, נחזיר את התמונה המקורית
+                callback(dataUrl);
+            };
+            
+            img.src = dataUrl;
+        }
+        
+
+        
+
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+        
+
+    </script>
+</body>
+</html> 
