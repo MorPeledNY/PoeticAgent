@@ -965,6 +965,7 @@
         
         // Handle edge analysis button click
         edgeAnalysisBtn.addEventListener('click', async () => {
+            console.log('Edge analysis button clicked');
             await performEdgeAnalysis();
         });
         
@@ -1010,6 +1011,7 @@
                         gradientImage.src = data.gradient_image;
                         colorAnalysisContainer.style.display = 'block';
                         edgeAnalysisBtn.style.display = 'inline-block';
+                        console.log('Edge analysis button should be visible now');
                     } else {
                         showError('לא התקבל גרדיאנט');
                     }
@@ -1507,6 +1509,10 @@
         }
         
         async function performEdgeAnalysis() {
+            console.log('performEdgeAnalysis called');
+            console.log('selectedImage:', selectedImage ? 'exists' : 'missing');
+            console.log('generatedImageUrl:', generatedImageUrl ? 'exists' : 'missing');
+            
             if (!selectedImage || !generatedImageUrl) {
                 showError('חסרים דימויים לניתוח');
                 return;
