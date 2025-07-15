@@ -48,11 +48,17 @@ session_data = {
 }
 
 # OpenAI client with error handling
-try:
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-except Exception as e:
-    print(f"Warning: OpenAI client initialization failed: {e}")
+api_key = os.getenv('OPENAI_API_KEY')
+if not api_key:
+    print("ERROR: OPENAI_API_KEY environment variable is not set!")
     client = None
+else:
+    try:
+        client = OpenAI(api_key=api_key)
+        print("✅ OpenAI client initialized successfully")
+    except Exception as e:
+        print(f"ERROR: OpenAI client initialization failed: {e}")
+        client = None
 
 # Function to encode image from base64 string
 def encode_image_from_base64(base64_string):
@@ -101,7 +107,7 @@ def analyze_image():
         })
         
         if client is None:
-            return jsonify({'error': 'OpenAI client not initialized'}), 500
+            return jsonify({'error': 'OpenAI client not initialized. Please check that OPENAI_API_KEY is set correctly.'}), 500
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -164,7 +170,7 @@ def generate_image():
         # Generate new image based on the poetic text
         try:
             if client is None:
-                return jsonify({'error': 'OpenAI client not initialized'}), 500
+                return jsonify({'error': 'OpenAI client not initialized. Please check that OPENAI_API_KEY is set correctly.'}), 500
                 
             image_result = client.images.generate(
                 model="dall-e-3",
