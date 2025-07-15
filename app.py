@@ -52,6 +52,7 @@ api_key = os.getenv('OPENAI_API_KEY')
 print(f"DEBUG: API key found: {'Yes' if api_key else 'No'}")
 if api_key:
     print(f"DEBUG: API key starts with: {api_key[:10]}...")
+    print(f"DEBUG: API key length: {len(api_key)}")
 
 if not api_key:
     print("ERROR: OPENAI_API_KEY environment variable is not set!")
@@ -62,12 +63,15 @@ if not api_key:
     client = None
 else:
     try:
-        # Set the environment variable explicitly before creating the client
-        os.environ['OPENAI_API_KEY'] = api_key
-        client = OpenAI()  # This will use the environment variable
-        print("✅ OpenAI client initialized successfully")
+        # Test the API key by making a simple request
+        test_client = OpenAI(api_key=api_key)
+        # Try to list models to test the key
+        models = test_client.models.list()
+        print(f"✅ API key test successful - found {len(models.data)} models")
+        client = test_client
     except Exception as e:
-        print(f"ERROR: OpenAI client initialization failed: {e}")
+        print(f"ERROR: API key test failed: {e}")
+        print("Please check your API key at: https://platform.openai.com/account/api-keys")
         client = None
 
 # Function to encode image from base64 string
