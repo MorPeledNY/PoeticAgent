@@ -49,8 +49,16 @@ session_data = {
 
 # OpenAI client with error handling
 api_key = os.getenv('OPENAI_API_KEY')
+print(f"DEBUG: API key found: {'Yes' if api_key else 'No'}")
+if api_key:
+    print(f"DEBUG: API key starts with: {api_key[:10]}...")
+
 if not api_key:
     print("ERROR: OPENAI_API_KEY environment variable is not set!")
+    print("DEBUG: Available environment variables:")
+    for key, value in os.environ.items():
+        if 'OPENAI' in key or 'API' in key:
+            print(f"  {key}: {value[:10] if value else 'None'}...")
     client = None
 else:
     try:
